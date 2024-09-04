@@ -1,9 +1,45 @@
-import React from 'react';
-import styled from 'styled-components';
-import { MdSearch } from 'react-icons/md';
-import { GithubContext } from '../context/context';
+import styled from "styled-components";
+import { MdSearch } from "react-icons/md";
+import { GithubContext } from "../context/context";
+import { FormEvent, useContext, useState } from "react";
+
 const Search = () => {
-  return <h2>search component</h2>;
+  const [user, setUser] = useState("");
+  const { request, error } = useContext(GithubContext);
+
+  // get things from global context
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (user) {
+      console.log(user);
+    }
+  };
+
+  return (
+    <section className="section">
+      {error.show && (
+        <ErrorWrapper>
+          <p>{error.msg}</p>
+        </ErrorWrapper>
+      )}
+      <Wrapper className="section-center">
+        <form onSubmit={handleSubmit}>
+          <div className="form-control">
+            <MdSearch />
+            <input
+              type="text"
+              name="user"
+              placeholder="enter github user"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+            />
+            {request > 0 && <button type="submit">search</button>}
+          </div>
+        </form>
+        <h3>request: {request}/60</h3>
+      </Wrapper>
+    </section>
+  );
 };
 
 const Wrapper = styled.div`
@@ -75,6 +111,7 @@ const Wrapper = styled.div`
     font-weight: 400;
   }
 `;
+
 const ErrorWrapper = styled.article`
   position: absolute;
   width: 90vw;

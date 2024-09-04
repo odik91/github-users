@@ -1,12 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useState, createContext, useContext } from "react";
+import React, { useState, createContext, useContext, useEffect } from "react";
 import mockUser from "./mockData.js/mockUser";
 import mockRepos from "./mockData.js/mockRepos";
 import mockFollowers from "./mockData.js/mockFollowers";
-// import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 // import { GithubUser, Repos, Followers } from "./types"; // Assuming you move the types to a separate file
 
-// const rootUrl = "https://api.github.com";
+const rootUrl = "https://api.github.com";
 
 export type GithubUser = {
   login: string;
@@ -180,6 +180,8 @@ type GithubContextType = {
   githubUser: GithubUser;
   repos: Repos[];
   followers: Followers[];
+  request: number;
+  error: ErrorType;
   setGithubUser: React.Dispatch<React.SetStateAction<GithubUser>>;
   setRepos: React.Dispatch<React.SetStateAction<Repos[]>>;
   setFollowers: React.Dispatch<React.SetStateAction<Followers[]>>;
@@ -221,14 +223,49 @@ const defaultGithubUser: GithubUser = {
   updated_at: "",
 };
 
+export type ResponseData = {
+  data: ResponseDataResources;
+  status: number;
+  statusText: string;
+  headers: unknown;
+  config: unknown;
+  request: unknown;
+};
+
+type ResponseDataResources = {
+  resources: DataResources;
+  rate: ResourcesChild;
+};
+
+type DataResources = {
+  core: ResourcesChild;
+  graphql: ResourcesChild;
+  integration_manifest: ResourcesChild;
+  search: ResourcesChild;
+};
+
+type ResourcesChild = {
+  limit: number;
+  remaining: number;
+  reset: number;
+  used: number;
+  resource: string;
+};
+
+type ErrorType = { show: boolean; msg: string };
+
 const defaultValueRepos: Repos[] = []; // Initialize as an empty array
 const defaultValueFollowers: Followers[] = []; // Initialize as an empty array
+const defaultValueRequest: number = 0; // Initialize as an empty array
+const defaultValueError: ErrorType = { show: false, msg: "" };
 
 // Create the context with the proper type
 const GithubContext = createContext<GithubContextType>({
   githubUser: defaultGithubUser,
   repos: defaultValueRepos,
   followers: defaultValueFollowers,
+  request: defaultValueRequest,
+  error: defaultValueError,
   setGithubUser: () => {},
   setRepos: () => {},
   setFollowers: () => {},
@@ -239,9 +276,50 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
   const [repos, setRepos] = useState<Repos[]>(mockRepos);
   const [followers, setFollowers] = useState<Followers[]>(mockFollowers);
 
+  // request loading
+  const [request, setRequest] = useState(0);
+  const [loading, isLoading] = useState(false);
+
+  // error
+  const [error, setError] = useState({ show: false, msg: "" });
+
+  // check rate
+  const checkRequests = async (): Promise<void> => {
+    try {
+      const response = await axios(`${rootUrl}/rate_limit`);
+      const { data } = response;
+      const { rate } = data;
+      setRequest(rate.remaining);
+      // setRequest(0);
+      if (rate.remaining === 0) {
+        toggleError(true, "sorry, you have exceeded your hourly rate limit!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const toggleError = (show: boolean, msg: string): void => {
+    setError({ show, msg });
+  };
+
+  // error
+  useEffect(() => {
+    checkRequests();
+  }, []);
+
   return (
     <GithubContext.Provider
-      value={{ githubUser, repos, followers, setGithubUser, setRepos, setFollowers }}
+      value={{
+        githubUser,
+        repos,
+        followers,
+        request,
+        error,
+        setGithubUser,
+        setRepos,
+        setFollowers,
+      }}
     >
       {children}
     </GithubContext.Provider>
