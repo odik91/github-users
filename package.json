@@ -12,8 +12,10 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
     "axios": "^1.7.7",
+    "fusioncharts": "^4.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-fusioncharts": "^4.1.0",
     "react-icons": "^5.3.0",
     "react-router-dom": "^6.26.1",
     "styled-components": "^6.1.13"

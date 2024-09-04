@@ -3,10 +3,10 @@ import React, { useState, createContext, useContext } from "react";
 import mockUser from "./mockData.js/mockUser";
 import mockRepos from "./mockData.js/mockRepos";
 import mockFollowers from "./mockData.js/mockFollowers";
-import axios from "axios";
+// import axios from "axios";
 // import { GithubUser, Repos, Followers } from "./types"; // Assuming you move the types to a separate file
 
-const rootUrl = "https://api.github.com";
+// const rootUrl = "https://api.github.com";
 
 export type GithubUser = {
   login: string;
