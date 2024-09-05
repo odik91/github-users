@@ -182,6 +182,7 @@ type GithubContextType = {
   followers: Followers[];
   request: number;
   error: ErrorType;
+  isLoading: boolean;
   searchGithubUser: (user: string) => Promise<void>;
   setGithubUser: React.Dispatch<React.SetStateAction<GithubUser>>;
   setRepos: React.Dispatch<React.SetStateAction<Repos[]>>;
@@ -267,6 +268,7 @@ const GithubContext = createContext<GithubContextType>({
   followers: defaultValueFollowers,
   request: defaultValueRequest,
   error: defaultValueError,
+  isLoading: false,
   searchGithubUser: async (): Promise<void> => {},
   setGithubUser: () => {},
   setRepos: () => {},
@@ -280,17 +282,26 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
 
   // request loading
   const [request, setRequest] = useState(0);
-  // const [loading, isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // error
   const [error, setError] = useState({ show: false, msg: "" });
 
   const searchGithubUser = async (user: string) => {
     toggleError();
+    setIsLoading(true);
     try {
       const response = await axios(`${rootUrl}/users/${user}`);
       if (response) {
         setGithubUser(response.data);
+        const { login, followers_url } = response.data;
+        const reposData = await axios(
+          `${rootUrl}/users/${login}/repos?per_page=100`
+        );
+        setRepos(reposData.data)
+
+        const followerData = await axios(`${followers_url}?per_page=100`);
+        setFollowers(followerData.data)
       } else {
         toggleError(true, "there is no user with that username");
       }
@@ -298,6 +309,8 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
       console.log(error);
       toggleError(true, "there is no user with that username");
     }
+    checkRequests();
+    setIsLoading(false);
   };
 
   // check rate
@@ -334,6 +347,7 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
         followers,
         request,
         error,
+        isLoading,
         setGithubUser,
         setRepos,
         setFollowers,
