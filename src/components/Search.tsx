@@ -5,24 +5,24 @@ import { FormEvent, useContext, useState } from "react";
 
 const Search = () => {
   const [user, setUser] = useState("");
-  const { request, error } = useContext(GithubContext);
+  const { request, error, searchGithubUser } = useContext(GithubContext);
 
   // get things from global context
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (user) {
-      console.log(user);
+      searchGithubUser(user);
     }
   };
 
   return (
     <section className="section">
-      {error.show && (
-        <ErrorWrapper>
-          <p>{error.msg}</p>
-        </ErrorWrapper>
-      )}
       <Wrapper className="section-center">
+        {error.show && (
+          <ErrorWrapper>
+            <p>{error.msg}</p>
+          </ErrorWrapper>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="form-control">
             <MdSearch />

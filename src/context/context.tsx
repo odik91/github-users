@@ -1,9 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useState, createContext, useContext, useEffect } from "react";
-import mockUser from "./mockData.js/mockUser";
-import mockRepos from "./mockData.js/mockRepos";
+import axios from "axios";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import mockFollowers from "./mockData.js/mockFollowers";
-import axios, { AxiosResponse } from "axios";
+import mockRepos from "./mockData.js/mockRepos";
+import mockUser from "./mockData.js/mockUser";
 // import { GithubUser, Repos, Followers } from "./types"; // Assuming you move the types to a separate file
 
 const rootUrl = "https://api.github.com";
@@ -182,6 +182,7 @@ type GithubContextType = {
   followers: Followers[];
   request: number;
   error: ErrorType;
+  searchGithubUser: (user: string) => Promise<void>;
   setGithubUser: React.Dispatch<React.SetStateAction<GithubUser>>;
   setRepos: React.Dispatch<React.SetStateAction<Repos[]>>;
   setFollowers: React.Dispatch<React.SetStateAction<Followers[]>>;
@@ -266,6 +267,7 @@ const GithubContext = createContext<GithubContextType>({
   followers: defaultValueFollowers,
   request: defaultValueRequest,
   error: defaultValueError,
+  searchGithubUser: async (): Promise<void> => {},
   setGithubUser: () => {},
   setRepos: () => {},
   setFollowers: () => {},
@@ -278,10 +280,25 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
 
   // request loading
   const [request, setRequest] = useState(0);
-  const [loading, isLoading] = useState(false);
+  // const [loading, isLoading] = useState(false);
 
   // error
   const [error, setError] = useState({ show: false, msg: "" });
+
+  const searchGithubUser = async (user: string) => {
+    toggleError();
+    try {
+      const response = await axios(`${rootUrl}/users/${user}`);
+      if (response) {
+        setGithubUser(response.data);
+      } else {
+        toggleError(true, "there is no user with that username");
+      }
+    } catch (error) {
+      console.log(error);
+      toggleError(true, "there is no user with that username");
+    }
+  };
 
   // check rate
   const checkRequests = async (): Promise<void> => {
@@ -299,13 +316,14 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const toggleError = (show: boolean, msg: string): void => {
+  const toggleError = (show: boolean = false, msg: string = ""): void => {
     setError({ show, msg });
   };
 
   // error
   useEffect(() => {
     checkRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -319,6 +337,7 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
         setGithubUser,
         setRepos,
         setFollowers,
+        searchGithubUser,
       }}
     >
       {children}
@@ -329,4 +348,4 @@ const GithubProvider = ({ children }: { children: React.ReactNode }) => {
 // Custom hook for easier access to the context
 export const useGithubContext = () => useContext(GithubContext);
 
-export { GithubProvider, GithubContext };
+export { GithubContext, GithubProvider };
